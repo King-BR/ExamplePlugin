@@ -56,7 +56,7 @@ public class ExamplePlugin extends Plugin{
     // Called when game initializes
     @Override
     public void init() {
-        // Create config file
+        // Create config file if it doesn't exist
         if (!Core.settings.getDataDirectory().child("mods/MindustryBR/config.json").exists()) {
             JSONObject defaultConfig = new JSONObject();
             defaultConfig.put("owner-id", "");
@@ -78,6 +78,9 @@ public class ExamplePlugin extends Plugin{
             Core.settings.getDataDirectory().child("mods/MindustryBR/config.json").writeString(defaultConfig.toString());
         }
 
+        // Load config
+        this.config = new JSONObject(Core.settings.getDataDirectory().child("mods/MindustryBR/config.json").readString());
+
         // Chat filter; Block all messages
         netServer.admins.addChatFilter((player, text) -> null);
     }
@@ -85,18 +88,10 @@ public class ExamplePlugin extends Plugin{
     //register commands that run on the server
     @Override
     public void registerServerCommands(CommandHandler handler){
-        /*
-        handler.register("reactors", "List all thorium reactors in the map.", args -> {
-            for(int x = 0; x < Vars.world.width(); x++){
-                for(int y = 0; y < Vars.world.height(); y++){
-                    //loop through and log all found reactors
-                    if(Vars.world.tile(x, y).block() == Blocks.thoriumReactor){
-                        Log.info("Reactor at @, @", x, y);
-                    }
-                }
-            }
+        handler.register("reloadconfig", "[MindustryBR] Reload plugin config", args -> {
+            // Load config
+            this.config = new JSONObject(Core.settings.getDataDirectory().child("mods/MindustryBR/config.json").readString());
         });
-        */
     }
 
     //register commands that player can invoke in-game
