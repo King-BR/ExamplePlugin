@@ -17,26 +17,35 @@ import mindustry.mod.Plugin;
 import org.json.*;
 
 public class ExamplePlugin extends Plugin{
-    private String OwnerPrefix = "[sky][Dono][] %1[orange] > [white]%2";
-    private String AdminPrefix = "[blue][Admin][] %1[orange] > [white]%2";
-    private String UserPrefix = "%1[orange] > [white]%2";
+    // [orange] > [white]%2
+    private String OwnerPrefix = "[sky][Dono][] %1";
+    private String AdminPrefix = "[blue][Admin][] %1";
+    private String UserPrefix = "%1";
 
     private JSONObject config;
 
     public ExamplePlugin() {
-        // Send message with special tag
-        Events.on(EventType.PlayerChatEvent.class, e -> {
-            if (e.player.getInfo().id.equals("UUt6yUMf3wcAAAAA8gH2Ug==")) {
-                Call.sendMessage(OwnerPrefix.replace("%1", e.player.name).replace("%2",e.message));
-            } else if (e.player.admin) {
-                Call.sendMessage(AdminPrefix.replace("%1", e.player.name).replace("%2",e.message));
-            } else {
-                Call.sendMessage(UserPrefix.replace("%1", e.player.name).replace("%2",e.message));
-            }
-        });
-        
-        // Unpause the game if one or more player is connected
         Events.on(PlayerJoin.class, e -> {
+            // Check for non-admin players with admin in name
+            if (!e.player.admin) {
+                if (e.player.name.toLowerCase().contains("admin")) {
+                    e.player.name = "retardado";
+                } else if (e.player.name.toLowerCase().contains("dono")) {
+                    e.player.name = "retardado²";
+                }
+            }
+
+            // Rename players to use the tag system
+            if (e.player.getInfo().id.equals("UUt6yUMf3wcAAAAA8gH2Ug==")) {
+                e.player.name = OwnerPrefix.replace("%1", e.player.name);
+            } else if (e.player.admin) {
+                e.player.name = AdminPrefix.replace("%1", e.player.name);
+            } else {
+                e.player.name = UserPrefix.replace("%1", e.player.name);
+            }
+
+            
+            // Unpause the game if one or more player is connected
         	if (Groups.player.size() >= 1 && state.serverPaused) {
         		state.serverPaused = false;
         		Log.info("auto-pause: " + Groups.player.size() + " jogador conectado -> Jogo despausado...");
@@ -44,8 +53,8 @@ public class ExamplePlugin extends Plugin{
         	}
         });
         
-        // Pause the game if no one is connected
-        Events.on(PlayerLeave.class, e -> {
+        Events.on(PlayerLeave.class, e -> {   
+            // Pause the game if no one is connected
         	if (Groups.player.size()-1 < 1) {
         		state.serverPaused = true;
         		Log.info("auto-pause: nenhum jogador conectado -> Jogo pausado...");
@@ -82,7 +91,7 @@ public class ExamplePlugin extends Plugin{
         this.config = new JSONObject(Core.settings.getDataDirectory().child("mods/MindustryBR/config.json").readString());
 
         // Chat filter; Block all messages
-        netServer.admins.addChatFilter((player, text) -> null);
+        //netServer.admins.addChatFilter((player, text) -> null);
     }
 
     //register commands that run on the server
