@@ -1,7 +1,7 @@
 {
   "name": "ExamplePlugin",
-  "author": "Anuke",
+  "author": "KingBR",
   "main": "example.ExamplePlugin",
-  "description": "A plugin to demonstrate some basic features.",
+  "description": "Plugin made for the MindsutryBR server",
   "version": 1.0
 }

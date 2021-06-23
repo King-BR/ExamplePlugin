@@ -1,49 +1,91 @@
 package example;
 
+// Arc imports
 import arc.*;
 import arc.util.*;
+
+// Mindustry imports
+import static mindustry.Vars.state;
+import static mindustry.Vars.netServer;
 import mindustry.*;
-import mindustry.content.*;
+import mindustry.game.EventType;
 import mindustry.game.EventType.*;
 import mindustry.gen.*;
-import mindustry.mod.*;
-import mindustry.net.Administration.*;
-import mindustry.world.blocks.storage.*;
+import mindustry.mod.Plugin;
+
+// Org.json imports
+import org.json.*;
 
 public class ExamplePlugin extends Plugin{
+    private String OwnerPrefix = "[sky][Dono][] %1[orange] > [white]%2";
+    private String AdminPrefix = "[blue][Admin][] %1[orange] > [white]%2";
+    private String UserPrefix = "%1[orange] > [white]%2";
 
-    //called when game initializes
+    private JSONObject config;
+
+    public ExamplePlugin() {
+        // Send message with special tag
+        Events.on(EventType.PlayerChatEvent.class, e -> {
+            if (e.player.getInfo().id.equals("UUt6yUMf3wcAAAAA8gH2Ug==")) {
+                Call.sendMessage(OwnerPrefix.replace("%1", e.player.name).replace("%2",e.message));
+            } else if (e.player.admin) {
+                Call.sendMessage(AdminPrefix.replace("%1", e.player.name).replace("%2",e.message));
+            } else {
+                Call.sendMessage(UserPrefix.replace("%1", e.player.name).replace("%2",e.message));
+            }
+        });
+        
+        // Unpause the game if one or more player is connected
+        Events.on(PlayerJoin.class, e -> {
+        	if (Groups.player.size() >= 1 && state.serverPaused) {
+        		state.serverPaused = false;
+        		Log.info("auto-pause: " + Groups.player.size() + " jogador conectado -> Jogo despausado...");
+        		Call.sendMessage("[scarlet][Server][]: Jogo despausado...");
+        	}
+        });
+        
+        // Pause the game if no one is connected
+        Events.on(PlayerLeave.class, e -> {
+        	if (Groups.player.size()-1 < 1) {
+        		state.serverPaused = true;
+        		Log.info("auto-pause: nenhum jogador conectado -> Jogo pausado...");
+        	}
+        });
+    }
+
+    // Called when game initializes
     @Override
-    public void init(){
-        //listen for a block selection event
-        Events.on(BuildSelectEvent.class, event -> {
-            if(!event.breaking && event.builder != null && event.builder.buildPlan() != null && event.builder.buildPlan().block == Blocks.thoriumReactor && event.builder.isPlayer()){
-                //player is the unit controller
-                Player player = event.builder.getPlayer();
+    public void init() {
+        // Create config file
+        if (!Core.settings.getDataDirectory().child("mods/MindustryBR/config.json").exists()) {
+            JSONObject defaultConfig = new JSONObject();
+            defaultConfig.put("owner-id", "");
 
-                //send a message to everyone saying that this player has begun building a reactor
-                Call.sendMessage("[scarlet]ALERT![] " + player.name + " has begun building a reactor at " + event.tile.x + ", " + event.tile.y);
+            JSONObject defaultDiscordConfig = new JSONObject();
+            String[] discordStrings = {
+                "token",
+                "channel_id",
+                "log_channel_id",
+                "serverstatus_channel_id",
+                "admin_role_id",
+                "mod_role_id"
+            };
+
+            for (String ds : discordStrings) {
+                defaultDiscordConfig.put(ds, "");
             }
-        });
 
-        //add a chat filter that changes the contents of all messages
-        //in this case, all instances of "heck" are censored
-        Vars.netServer.admins.addChatFilter((player, text) -> text.replace("heck", "h*ck"));
+            Core.settings.getDataDirectory().child("mods/MindustryBR/config.json").writeString(defaultConfig.toString());
+        }
 
-        //add an action filter for preventing players from doing certain things
-        Vars.netServer.admins.addActionFilter(action -> {
-            //random example: prevent blast compound depositing
-            if(action.type == ActionType.depositItem && action.item == Items.blastCompound && action.tile.block() instanceof CoreBlock){
-                action.player.sendMessage("Example action filter: Prevents players from depositing blast compound into the core.");
-                return false;
-            }
-            return true;
-        });
+        // Chat filter; Block all messages
+        netServer.admins.addChatFilter((player, text) -> null);
     }
 
     //register commands that run on the server
     @Override
     public void registerServerCommands(CommandHandler handler){
+        /*
         handler.register("reactors", "List all thorium reactors in the map.", args -> {
             for(int x = 0; x < Vars.world.width(); x++){
                 for(int y = 0; y < Vars.world.height(); y++){
@@ -54,30 +96,25 @@ public class ExamplePlugin extends Plugin{
                 }
             }
         });
+        */
     }
 
     //register commands that player can invoke in-game
     @Override
     public void registerClientCommands(CommandHandler handler){
-
-        //register a simple reply command
-        handler.<Player>register("reply", "<text...>", "A simple ping command that echoes a player's text.", (args, player) -> {
-            player.sendMessage("You said: [accent] " + args[0]);
-        });
-
         //register a whisper command which can be used to send other players messages
-        handler.<Player>register("whisper", "<player> <text...>", "Whisper text to another player.", (args, player) -> {
+        handler.<Player>register("dm", "<player> <texto...>", "Mande uma mensagem privada para um jogador.", (args, player) -> {
             //find player by name
             Player other = Groups.player.find(p -> p.name.equalsIgnoreCase(args[0]));
 
             //give error message with scarlet-colored text if player isn't found
             if(other == null){
-                player.sendMessage("[scarlet]No player by that name found!");
+                player.sendMessage("[scarlet]Nenhum jogador encontrado com esse nome!");
                 return;
             }
 
             //send the other player a message, using [lightgray] for gray text color and [] to reset color
-            other.sendMessage("[lightgray](whisper) " + player.name + ":[] " + args[1]);
+            other.sendMessage("[lightgray](DM) " + player.name + ":[] " + args[1]);
         });
     }
 }
