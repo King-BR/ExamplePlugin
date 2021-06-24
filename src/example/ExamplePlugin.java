@@ -6,15 +6,14 @@ import arc.util.*;
 
 // Mindustry imports
 import static mindustry.Vars.state;
-import static mindustry.Vars.netServer;
 import mindustry.*;
-import mindustry.game.EventType;
 import mindustry.game.EventType.*;
 import mindustry.gen.*;
 import mindustry.mod.Plugin;
 
-// Org.json imports
+// Org imports
 import org.json.*;
+import org.javacord.api.*;
 
 public class ExamplePlugin extends Plugin{
     // [orange] > [white]%2
@@ -28,7 +27,7 @@ public class ExamplePlugin extends Plugin{
         Events.on(PlayerJoin.class, e -> {
             // Check for non-admin players with admin in name
             if (!e.player.admin) {
-                if (e.player.name.toLowerCase().contains("admin")) {
+                if (e.player.name.toLowerCase().contains("admin") || e.player.name.toLowerCase().contains("adm")) {
                     e.player.name = "retardado";
                 } else if (e.player.name.toLowerCase().contains("dono")) {
                     e.player.name = "retardado²";
@@ -84,6 +83,8 @@ public class ExamplePlugin extends Plugin{
                 defaultDiscordConfig.put(ds, "");
             }
 
+            defaultConfig.put("discord", defaultDiscordConfig);
+
             Core.settings.getDataDirectory().child("mods/MindustryBR/config.json").writeString(defaultConfig.toString());
         }
 
@@ -100,6 +101,10 @@ public class ExamplePlugin extends Plugin{
         handler.register("reloadconfig", "[MindustryBR] Reload plugin config", args -> {
             // Load config
             this.config = new JSONObject(Core.settings.getDataDirectory().child("mods/MindustryBR/config.json").readString());
+        });
+
+        handler.register("startbot", "[MindustryBR] Start bot", args -> {
+            Bot.run(this.config.getJSONObject("discord").getString("token"));
         });
     }
 

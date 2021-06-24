@@ -139,6 +139,7 @@ nb-configuration.xml
 
 ## VS code
 .vscode/
+bin/
 
 ## Gradle
 

@@ -1,38 +1,33 @@
-apply plugin: "java"
+plugins{id "java"}
 
-version '1.0'
+sourceCompatibility = 1.8;
 
-sourceCompatibility = 1.8
-
-sourceSets.main.java.srcDirs = ["src"]
-
-compileJava.options.encoding = "UTF-8"
-compileTestJava.options.encoding = "UTF-8"
-
-repositories{
-    mavenCentral()
-    maven{ url 'https://www.jitpack.io' }
+sourceSets.main{
+    java.srcDir("src/");
+    resources.srcDir("resource/");
 }
 
-ext{
-    //the build number that this plugin is made for
-    mindustryVersion = 'v126.2'
+repositories{
+    mavenCentral();
+    maven{
+        url("https://jitpack.io");
+    }
 }
 
 dependencies{
-    compileOnly "com.github.Anuken.Arc:arc-core:$mindustryVersion"
-    compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"
+    compileOnly("com.github.Anuken.Mindustry:core:126.2");
 
     implementation 'org.json:json:20210307'
+    implementation 'org.javacord:javacord:3.3.0'
 }
 
 jar{
-    archiveFileName = "${project.archivesBaseName}.jar"
+    archiveFileName.set("ExamplePlugin.jar");
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE;
+    
     from{
-        configurations.runtimeClasspath.collect{it.isDirectory() ? it : zipTree(it)}
-    }
-
-    from(rootDir){
-        include "plugin.json"
+        configurations.compileClasspath.collect{
+            it.isDirectory() ? it : zipTree(it);
+        }
     }
 }
